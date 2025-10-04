@@ -1,0 +1,38 @@
+- switch:
+    - name: "All Camera Privacy"
+      unique_id: all_camera_privacy
+      state: >
+        {{ is_state('switch.back_door_privacy','on')
+           and is_state('switch.dog_privacy','on')
+           and is_state('switch.front_door_privacy','on') }}
+      turn_on:
+        service: switch.turn_on
+        target:
+          entity_id:
+            - switch.back_door_privacy
+            - switch.dog_privacy
+            - switch.front_door_privacy
+      turn_off:
+        service: switch.turn_off
+        target:
+          entity_id:
+            - switch.back_door_privacy
+            - switch.dog_privacy
+            - switch.front_door_privacy
+
+  - sensor:
+      - name: "House Average Temperature"
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state: >
+          {% set sensors = [
+            states('sensor.bedroom_t_h_temperature'),
+            states('sensor.thermostat_1_current_temperature'),
+            states('sensor.lounge_t_h_temperature')
+          ] %}
+          {% set valid_sensors = sensors | reject('eq', 'unavailable') | reject('eq', 'unknown') | map('float') | list %}
+          {% if valid_sensors | length > 0 %}
+            {{ (valid_sensors | sum / valid_sensors | length) | round(1) }}
+          {% else %}
+            unavailable
+          {% endif %}
